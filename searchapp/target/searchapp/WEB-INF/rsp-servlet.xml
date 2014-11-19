@@ -1,0 +1,42 @@
+<!DOCTYPE beans PUBLIC "//UNKNOWN/" "http://www.springframework.org/dtd/spring-beans-2.0.dtd">
+
+<!--
+	- DispatcherServlet application context for the Countries web tier.
+-->
+<beans>	
+	<bean id="urlMapping"
+		class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+		<property name="mappings">
+			<map>
+				<entry key="/results.html">
+					<ref bean="searchController" />
+				</entry>
+			</map>
+		</property>
+	</bean>	
+	
+	<bean id="messageSource"
+		class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basename">
+			<value>messages</value>
+		</property>
+	</bean>
+	<bean id="viewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass">
+			<value>org.springframework.web.servlet.view.JstlView</value>
+		</property>
+		<property name="prefix">
+			<value>/common/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+	<!-- Controller for monitoring page -->
+	<bean id="searchController" class="com.search.controller.SearchController">
+		<property name="port"><value>8983</value></property>
+		<property name="appContext"><value>solr</value></property>
+		<property name="servletName"><value>select</value></property>			
+	</bean>
+</beans>

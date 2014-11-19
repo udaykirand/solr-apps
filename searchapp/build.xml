@@ -1,0 +1,114 @@
+<project name="searchapp" basedir=".">
+
+    <property file="build.properties"/>
+    <property name="src.dir"     value="${basedir}/src"/>
+    <property name="conf.dir"    value="${basedir}/conf"/>
+	<property name="lib.dir"    value="${basedir}/lib"/>
+	<property name="web.dir"     value="${basedir}/web"/>
+    <property name="web.lib.dir" value="${basedir}/target/searchapp/WEB-INF/lib"/>
+    <property name="build.dir"   value="${basedir}/target"/>
+    <property name="war.dir"     value="${build.dir}/searchapp"/>
+	<property name="tspringconf.dir"     value="${war.dir}"/>
+	<property name="fspringconf.dir"     value="${basedir}/springconf"/>
+    <property name="classes.dir" value="${war.dir}/WEB-INF/classes"/>
+    <property name="dist.dir"    value="${build.dir}/dist"/>
+    <property name="ant.project.name" value="searchapp"/>
+
+<!-- =================================================================== -->
+    <!-- Classpaths and internal initialization targets                      -->
+    <!-- =================================================================== -->
+    <path id="build.class.path">
+        <fileset dir="${web.lib.dir}" includes="**/*.jar"/>
+        <pathelement location="${jboss.home}/common/lib/servlet-api.jar"/>
+        <pathelement location="${classes.dir}"/>
+    </path>
+
+    <target name="init" description="Creates directories needed by the build system.">
+	    <mkdir dir="${build.dir}"/>
+	    <mkdir dir="${war.dir}"/>
+	    <mkdir dir="${classes.dir}/messages"/>
+	    <mkdir dir="${dist.dir}"/>
+    	<mkdir dir="${web.lib.dir}"/>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Clean the build directory                                           -->
+    <!-- =================================================================== -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="lib" description="Copies lib directory">
+    	<copy todir="${web.lib.dir}">
+    	            <fileset dir="${lib.dir}" includes="**/*"/>
+    	</copy>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Compile the code into the web abb and move any resources into the   -->
+    <!-- classpath.                                                          -->
+    <!-- =================================================================== -->
+    <target name="compile" depends="init, lib">
+        <javac destdir="${classes.dir}"
+               nowarn="${javac.warn}"
+               verbose="${javac.verbose}"
+               debug="${javac.debug}" >
+            <src path="${src.dir}"/>
+            <classpath refid="build.class.path"/>
+        </javac>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Jar up the web directory to create a deployable web app archive.    -->
+    <!-- =================================================================== -->
+    <target name="war" description="Builds a deployable war file.">
+        <copy todir="${war.dir}">
+            <fileset dir="${web.dir}" includes="**/*"/>
+        </copy>
+
+        <copy todir="${tspringconf.dir}/WEB-INF">
+            <fileset dir="${fspringconf.dir}" includes="**/*"/>
+    	</copy>
+   
+    	<copy todir="${classes.dir}">
+            <fileset dir="${conf.dir}" includes="log4j.xml"/>
+        </copy>
+
+        <copy todir="${tspringconf.dir}/WEB-INF">
+            <fileset dir="${conf.dir}" includes="log4j.xml"/>
+    	</copy>
+    	
+    	<!-- Update log4j.xml with the log file path -->
+    	<replace
+    		file = "${classes.dir}/log4j.xml"
+    	    propertyFile="${conf.dir}/log4j.properties">
+    	  	<replacefilter
+    	    	token="@LogFilePath@"
+    	    	property="${log4j.logfile.path}"/>
+    	</replace>
+
+    	<replace
+    		file = "${tspringconf.dir}/WEB-INF/log4j.xml"
+    	    propertyFile="${conf.dir}/log4j.properties">
+    	  	<replacefilter
+    	    	token="@LogFilePath@"
+    	    	property="${log4j.logfile.path}"/>
+    	</replace>
+    	    		
+        <jar destfile="${dist.dir}/searchapp.war" basedir="${war.dir}"/>
+    </target>
+
+	<target name="war.local" description="Builds a deployable war file.">
+        <antcall target="war">
+            <param name="log4j.logfile.path" value="log4j.logfile.path"/>
+        </antcall>
+        
+        <copy file="${dist.dir}/${ant.project.name}.war" todir="${jboss.home}/server/default/deploy" />
+    </target>
+
+	<!-- =================================================================== -->
+    <!-- Create the distribution artifacts                              .    -->
+    <!-- =================================================================== -->
+    <target name="dist" depends="clean, compile, war.local"/>
+    
+ </project>
